@@ -1,163 +1,72 @@
-# Event Scheduler Backend
+Overview:
+You are tasked with building a backend service that integrates with the Ticketmaster
+public API to collect events, store them locally, and allow authenticated users to save
+and retrieve personal favorite events.
+Functional Requirements
+Authentication
+● Implement user authentication using a third-party identity provider.
+● Only authenticated users should be able to:
+○ Save events to their personal list.
+○ Retrieve their saved events.
+● Unauthenticated users should still be able to browse public events.
+External API Integration
+● Integrate with Ticketmaster Discovery API.
+● Choose which endpoints and data fields you want to retrieve.
+● Persist relevant event data into your local database.
+● Design your data model thoughtfully.
+Event Fetching Strategy
+● Define your own strategy for fetching and updating events:
+○ Scheduled background jobs?
+○ On-demand fetching?
+○ Combination?
+● Justify your approach in your documentation.
+API Endpoints
+At minimum, your system should expose:
+Method Path Description
+GET /events/ List public events (paginated, allow
+filtering/querying)
+POST /events/{event_id}/save Save an event to the authenticated
+user’s personal list.
+GET /my/events/ Retrieve the authenticated user’s
+saved events.
+The API should follow RESTful principles and be self-explanatory.
+Technical Requirements
+Technology Stack
+Your solution should be built primarily with:
+● Python 3.11+
+● A modern Python web framework suitable for building web APIs (e.g. FastAPI)
+● A relational database (e.g. PostgreSQL)
+● The App should be deployable using docker-compose
+You are free to choose specific libraries, packages, and tools that you believe are appropriate —
+be prepared to explain your decisions.
+Authentication should rely on a third-party identity provider (e.g., Auth0 or equivalent).
+Design Expectations
+Structure your code in a way that facilitates maintainability, testability, and future scalability.
+Apply appropriate software engineering principles such as:
+● Separation of concerns
+● Dependency injection where meaningful
+● Error handling and consistent exception management
+● Logging and observability
+● Thoughtful use of design patterns where applicable
+● Async programming where it makes sense
+Testing
+● Include unit tests covering critical parts of your business logic.
+● Focus on areas such as:
+○ Data access
+○ Business logic
+● You may use any testing framework you’re comfortable with (e.g. pytest).
+Deliverables
+● Complete codebase in a Git repository.
+● A clear and complete `README.md` that includes:
+○ Setup and run instructions (including Docker Compose)
+○ Auth provider setup instructions (how to configure your identity provider)
+○ API usage guide
+○ Design and architecture explanation
+○ Justification for major design and technology decisions
+# Example using PyPDF2
+import PyPDF2
 
-A FastAPI backend service that integrates with the Ticketmaster public API to collect events, store them locally, and allow authenticated users to save and retrieve personal favorite events.
-
----
-
-## Features
-
-- **User Authentication**: Only authenticated users (via Google OAuth or Auth0) can save and view their favorite events.
-- **Public Event Browsing**: Unauthenticated users can browse public events.
-- **Hybrid Event Fetching**: Events are cached locally for 1 hour for fast access; fresh data is fetched from Ticketmaster as needed.
-- **RESTful API**: Clean, self-explanatory endpoints.
-- **Dockerized**: Easy to run with Docker Compose.
-- **Logging**: Key actions and errors are logged for observability.
-
----
-
-## Table of Contents
-
-- [Requirements](#requirements)
-- [Setup Instructions](#setup-instructions)
-- [Running with Docker Compose](#running-with-docker-compose)
-- [Authentication Provider Setup](#authentication-provider-setup)
-- [API Usage Guide](#api-usage-guide)
-- [Design & Architecture](#design--architecture)
-- [Event Fetching Strategy](#event-fetching-strategy)
-- [Testing](#testing)
-- [Technology Choices](#technology-choices)
-
----
-
-## Requirements
-
-- Python 3.11+
-- Docker & Docker Compose (recommended)
-- PostgreSQL database
-- Ticketmaster API Key
-- Google OAuth or Auth0 credentials
-
----
-
-## Setup Instructions
-
-1. **Clone the Repository**
-   ```sh
-   git clone https://github.com/yourusername/events-scheduler.git
-   cd events-scheduler
-   ```
-
-2. **Create a `.env` File in the Project Root**
-   ```
-   DATABASE_URL=postgresql://postgres:postgres@db:5432/eventsdb
-   TICKETMASTER_API_KEY=your_ticketmaster_api_key
-   SECRET_KEY=your_fastapi_secret_key
-   GOOGLE_CLIENT_ID=your_google_client_id
-   GOOGLE_CLIENT_SECRET=your_google_client_secret
-   ```
-
-3. **(Optional) Install Python Dependencies Locally**
-   ```sh
-   pip install -r requirements.txt
-   ```
-
----
-
-## Running with Docker Compose
-
-1. **Build and Start the Services**
-   ```sh
-   docker-compose up --build
-   ```
-
-2. **Access the API**
-   - Open [http://localhost:8000/docs](http://localhost:8000/docs) for Swagger UI.
-
----
-
-## Authentication Provider Setup
-
-- **Google OAuth**:  
-  - Go to [Google Cloud Console](https://console.cloud.google.com/).
-  - Create OAuth 2.0 credentials.
-  - Set the redirect URI to `http://localhost:8000/auth/callback`.
-  - Add your `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to `.env`.
-
-- **Auth0** (alternative):  
-  - Create an Auth0 application.
-  - Set callback URLs and add credentials to `.env`.
-
----
-
-## API Usage Guide
-
-### **Public Endpoints**
-
-- `GET /events`
-  - List public events (supports pagination and filtering).
-  - Query params: `page`, `size`, `keyword`, `city`, `startDateTime`, `endDateTime`, `refresh`.
-
-### **Authenticated Endpoints**
-
-- `POST /events/{event_id}/save`
-  - Save an event to your personal list (must be logged in).
-
-- `GET /my/events`
-  - Retrieve your saved events.
-
-### **Example: Fetch Events**
-```sh
-curl "http://localhost:8000/events?page=1&size=10"
-```
-
-### **Example: Save Event (Authenticated)**
-- Log in via Swagger UI or your frontend to get a session.
-- Use `/events/{event_id}/save` with a valid event ID.
-
----
-
-## Design & Architecture
-
-- **FastAPI** for async, modern API development.
-- **SQLAlchemy** for ORM and database access.
-- **Hybrid event fetching**: Cached events are served if fresh; otherwise, new data is fetched from Ticketmaster.
-- **Separation of concerns**: Models, API routes, and authentication are modular.
-- **Logging**: All major actions and errors are logged.
-
----
-
-## Event Fetching Strategy
-
-We use a **hybrid strategy**:
-- Events are cached locally for 1 hour.
-- If the cache is fresh, events are served from the local database for speed and reliability.
-- If the cache is stale or a manual refresh is requested, events are fetched from Ticketmaster and the cache is updated.
-- This balances performance, API rate limits, and data freshness.
-
----
-
-## Testing
-
-- Unit tests are located in the `tests/` directory.
-- To run tests:
-  ```sh
-  pytest
-  ```
-- Focus is on data access and business logic.
-
----
-
-## Technology Choices
-
-- **FastAPI**: Modern, async Python web framework.
-- **PostgreSQL**: Reliable relational database.
-- **Docker Compose**: Simplifies deployment and local development.
-- **httpx**: Async HTTP client for external API calls.
-- **SQLAlchemy**: ORM for database access.
-- **pytest**: Testing framework.
-
----
-
-
-
-
+with open('c:/Users/PC/Downloads/BE Technical Challenge.pdf', 'rb') as file:
+    reader = PyPDF2.PdfReader(file)
+    for page in reader.pages:
+        print(page.extract_text())
